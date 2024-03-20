@@ -1,11 +1,12 @@
 from flask import Flask, render_template, request, make_response, session, jsonify
-from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+# from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.utils import redirect
 from data import db_session
 from data.users import User
 from forms.user import RegisterForm, LoginForm
 from flask_jwt_extended import JWTManager, jwt_required
 from flask_cors import CORS
+import json
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -88,6 +89,7 @@ jwt = JWTManager(app)
 def registration():
     db_sess = db_session.create_session()
     params = request.json
+    # print(params)
     user = User(
         name=params['name'],
         email=params['email'],
@@ -103,18 +105,21 @@ def registration():
 def login():
     db_sess = db_session.create_session()
     params = request.json
-    user = db_sess.query(User).filter(params['email'] == User.email).one()
+    # form = request.form.to_dict()
+    # params = json.loads(request.json)
+    # print(params)
+    user = db_sess.query(User).filter(params['name'] == User.email).first()
+    # user = db_sess.query(User).filter(form['email'] == User.email).one()
     if not user.check_password(params['password']):
         raise Exception('No user with this password')
     token = user.get_token()
     return {'access_token': token}
 
 
+
 def main():
-    global client
     db_session.global_init('db/data_of_users.db')
-    client = app.test_client()
-    app.run()
+    app.run(debug=True)
 
 
 if __name__ == '__main__':
